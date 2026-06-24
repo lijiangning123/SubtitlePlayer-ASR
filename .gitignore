@@ -1,0 +1,17 @@
+# Subtitle Player - Git Ignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Claude
+.claude/
+MEMORY.md
+
+# Temp
+*.crswap
+*.tmp

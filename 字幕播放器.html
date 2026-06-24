@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📝 字幕播放器 - Subtitle Player</title>
+  <link rel="stylesheet" href="css/player.css">
+</head>
+<body>
+
+  <!-- ===== 顶部导航 ===== -->
+  <div class="topbar">
+    <span class="logo"><span class="icon">📝</span>字幕播放器 <span style="font-weight:400;font-size:0.7rem;color:var(--text-dim);">Subtitle Player</span></span>
+    <div class="topbar-actions">
+      <button class="btn btn-sm" id="btnOpenVideo" title="打开视频文件">🎬 打开视频</button>
+      <input type="file" id="videoInput" accept="video/*" style="display:none">
+      <button class="btn btn-sm" id="btnOpenSub" title="上传字幕文件 (SRT / VTT)">📄 上传字幕</button>
+      <input type="file" id="subInput" accept=".srt,.vtt,.txt" style="display:none">
+      <button class="btn btn-sm" id="btnOpenNotes" title="上传笔记文件 (TXT)">📝 上传笔记</button>
+      <input type="file" id="notesFileInput" accept=".txt" style="display:none">
+      <button class="btn btn-sm" id="btnToggleCC" title="开关字幕显示">💬 CC</button>
+      <button class="btn btn-sm" id="btnFontDown" title="CC 字体缩小">A⁻</button>
+      <button class="btn btn-sm" id="btnFontUp" title="CC 字体放大">A⁺</button>
+      <button class="btn btn-sm" id="btnClearSub" title="清除字幕">🗑</button>
+      <span class="theme-dropdown" id="themeDropdown">
+        <button class="btn btn-sm" id="btnTheme" title="切换主题">🎨 主题</button>
+        <div class="theme-menu" id="themeMenu">
+          <button class="theme-menu-item active" data-theme="default"><span class="dot" style="background:#88675E;"></span>香槟</button>
+          <button class="theme-menu-item" data-theme="hacker"><span class="dot" style="background:#56D180;"></span>黑客</button>
+          <button class="theme-menu-item" data-theme="moonlight"><span class="dot" style="background:#5b8def;"></span>月光</button>
+          <button class="theme-menu-item" data-theme="sakura"><span class="dot" style="background:#e8b4b8;"></span>樱花</button>
+          <button class="theme-menu-item" data-theme="forest"><span class="dot" style="background:#8aaa7a;"></span>森林</button>
+          <button class="theme-menu-item" data-theme="sunset"><span class="dot" style="background:#FF650D;"></span>落日</button>
+        </div>
+      </span>
+      <button class="btn btn-sm" id="btnRestore" title="恢复上次视频" style="display:none;">🕐 恢复</button>
+      <button class="btn btn-sm" id="btnMuteToast" title="开关提示消息">🔔</button>
+    </div>
+  </div>
+
+  <!-- ===== 主体 ===== -->
+  <div class="main">
+
+    <!-- ===== 左侧：视频区 ===== -->
+    <div class="video-panel" id="videoPanel">
+      <div class="video-placeholder" id="videoPlaceholder">
+        <span class="big-icon">🎬</span>
+        点击「打开视频」或拖拽视频文件到此处
+        <span style="font-size:0.8rem;color:var(--text-dim);">支持拖拽上传字幕文件</span>
+      </div>
+      <div class="player-container" id="playerContainer" style="display:none;">
+        <video id="video" controlsList="nodownload"></video>
+        <div class="fs-timeline" id="fsTimeline">
+          <div class="fs-timeline-inner">
+            <span id="fsCurrentTime">00:00</span>
+            <div class="fs-bar" id="fsBar"><div class="fs-bar-fill" id="fsBarFill"></div></div>
+            <span id="fsDuration">00:00</span>
+          </div>
+        </div>
+      </div>
+      <div class="cc-area" id="ccArea"><span class="cc-text" id="ccText"></span><span class="cc-handle" id="ccHandle" title="拖拽到视频上 → 叠加模式">⋮⋮</span></div>
+
+      <!-- 控制栏 -->
+      <div class="controls" id="controls" style="display:none;">
+        <button class="btn" id="btnPlayPause" title="播放 / 暂停 (空格键)">▶ 播放</button>
+        <span class="speed-indicator" id="speedIndicator" title="当前播放速度">1×</span>
+        <button class="btn btn-sm" id="btnSpeedDown" title="减速">−</button>
+        <button class="btn btn-sm" id="btnSpeedUp" title="加速">+</button>
+        <button class="btn btn-sm" id="btnSpeedReset" title="恢复 1×">1×</button>
+        <span class="subtitle-info" id="subtitleInfo"></span>
+      </div>
+
+      <!-- 时间轴 -->
+      <div class="timeline-section" id="timelineSection" style="display:none;">
+        <div class="timeline-info">
+          <span id="currentTime">00:00</span>
+          <span id="duration">00:00</span>
+        </div>
+        <div class="timeline-bar" id="timelineBar">
+          <div class="timeline-track" id="timelineTrack">
+            <div class="timeline-progress" id="timelineProgress"></div>
+          </div>
+        </div>
+        <div class="timeline-hint">
+          💡 双击视频 = 全屏 &nbsp;|&nbsp;左键时间轴 = 跳转 &nbsp;|&nbsp; 空格 = 播放/暂停 &nbsp;|&nbsp; ⬅➡ = 快退/快进5秒 &nbsp;|&nbsp; 长按 ➡ = 3×倍速
+        </div>
+      </div>
+    </div>
+
+    <!-- 可拖拽分隔条 -->
+    <div class="resize-handle" id="resizeHandle"></div>
+
+    <!-- ===== 右侧：字幕文稿面板 ===== -->
+    <div class="transcript-panel" id="transcriptPanel">
+      <h2>
+        <span class="panel-header-left">📋</span>
+        <button class="btn btn-sm" id="btnAutoScroll" title="自动滚动：开">📍 跟滚</button>
+        <button class="btn btn-sm" id="btnEdit" title="编辑字幕">✏️ 编辑</button>
+        <button class="btn btn-sm" id="btnNotes" title="笔记">📝 笔记</button>
+        <span style="font-size:0.7rem;font-weight:400;color:var(--text-dim);" id="subCount"></span>
+      </h2>
+      <div class="edit-toolbar" id="editToolbar">
+        <button class="btn btn-sm" id="btnEditNew" title="在当前时间新建字幕">➕ 新建</button>
+        <button class="btn btn-sm" id="btnEditUndo" title="撤销">↩</button>
+        <button class="btn btn-sm" id="btnEditRedo" title="重做">↪</button>
+        <button class="btn btn-sm" id="btnEditSave" title="保存修改">💾 保存</button>
+        <button class="btn btn-sm" id="btnEditExport" title="导出 SRT 文件">📥 导出</button>
+      </div>
+      <input type="text" class="search-box" id="searchBox" placeholder="🔍 搜索字幕内容...">
+      <div class="transcript-list" id="transcriptList">
+        <div class="empty-state" id="transcriptEmpty">
+          <span class="big-icon">📄</span>
+          暂无字幕<br>
+          <span style="font-size:0.75rem;">点击右上角「上传字幕」添加 SRT 或 VTT 文件</span>
+          <br><br>
+          <span style="font-size:0.7rem;color:var(--text-dim);">也支持拖拽字幕文件到本页面</span>
+        </div>
+      </div>
+
+      <!-- 笔记分隔条 -->
+      <div class="notes-resize-handle" id="notesResizeHandle"></div>
+      <!-- 笔记 -->
+      <div class="notes-container" id="notesContainer">
+        <div class="notes-toolbar">
+          <button class="btn btn-sm" id="btnNotesNew" title="新建笔记条目">➕</button>
+          <button class="btn btn-sm" id="btnNotesUndo" title="撤销">↩</button>
+          <button class="btn btn-sm" id="btnNotesRedo" title="重做">↪</button>
+          <button class="btn btn-sm" id="btnNotesSave" title="保存笔记">💾 保存</button>
+          <button class="btn btn-sm" id="btnNotesExport" title="导出 TXT">📥 导出</button>
+          <button class="btn btn-sm" id="btnNotesClear" title="清除笔记">🗑</button>
+        </div>
+        <input type="text" class="notes-search-box" id="notesSearchBox" placeholder="🔍 搜索笔记内容...">
+        <div class="notes-list" id="notesList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="js/setup.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/memory.js"></script>
+  <script src="js/parser.js"></script>
+  <script src="js/subtitles.js"></script>
+  <script src="js/edit.js"></script>
+  <script src="js/notes.js"></script>
+  <script src="js/video.js"></script>
+  <script src="js/drag.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
