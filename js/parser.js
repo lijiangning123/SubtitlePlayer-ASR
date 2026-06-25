@@ -120,6 +120,7 @@ DP.subGlobalKey = function(videoName) {
 /** 保存字幕到 localStorage */
 DP.saveSubtitlesToStorage = function() {
   try {
+    DP.fixSubtitleOverlaps();
     const cues = DP.subtitles.map(function(s) { return { start: s.start, end: s.end, text: s.text }; });
     const json = JSON.stringify(cues);
     localStorage.setItem(DP.subKey(), json);

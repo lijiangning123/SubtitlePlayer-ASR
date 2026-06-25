@@ -12,7 +12,22 @@
 
   // ==================== 核心函数 ====================
 
+  // 修复字幕时间重叠：如果前一条的结束时间晚于后一条的开始时间，
+  // 就把前一条的结束时间提前到后一条开始时间之前一点点（1ms），避免显示冲突。
+  DP.fixSubtitleOverlaps = function fixSubtitleOverlaps() {
+    const subs = DP.subtitles;
+    if (subs.length < 2) return;
+    // 确保按开始时间排序
+    subs.sort((a, b) => a.start - b.start);
+    for (let i = 0; i < subs.length - 1; i++) {
+      if (subs[i].end > subs[i + 1].start) {
+        subs[i].end = Math.max(subs[i].start, subs[i + 1].start - 0.001);
+      }
+    }
+  };
+
   DP.generateSRT = function generateSRT() {
+    DP.fixSubtitleOverlaps();
     let srt = '';
     DP.subtitles.forEach((sub, i) => {
       const startH = new Date(sub.start * 1000).toISOString().slice(11, 23).replace('.', ',');
