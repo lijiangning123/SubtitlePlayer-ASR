@@ -180,9 +180,9 @@ DP.btnNotes.addEventListener('click', () => {
     DP.notesUndo = [];
     DP.notesRedo = [];
     DP.renderNotes();
-    // 默认分界：字幕 36% / 笔记 64%
-    DP.transcriptList.style.flex = '0 0 36%';
-    DP.notesContainer.style.flex = '0 0 64%';
+    // 默认分界：字幕 36% / 笔记 64%（flex-shrink:1 防止编辑工具栏出现时把头部顶没）
+    DP.transcriptList.style.flex = '0 1 36%';
+    DP.notesContainer.style.flex = '0 1 64%';
     DP.showToast('📝 笔记模式');
   } else {
     DP.saveNotesToStorage();
@@ -200,8 +200,8 @@ DP.btnNotes.addEventListener('click', () => {
   if (saved !== '1') return;
   DP.notesMode = true;
   DP.transcriptPanel.classList.add('notes-mode');
-  DP.transcriptList.style.flex = '0 0 36%';
-  DP.notesContainer.style.flex = '0 0 64%';
+  DP.transcriptList.style.flex = '0 1 36%';
+  DP.notesContainer.style.flex = '0 1 64%';
   DP.loadNotesFromStorage();
   DP.renderNotes();
   DP.btnNotes.style.opacity = '1';
