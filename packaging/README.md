@@ -6,9 +6,9 @@ Goal: create a no-install Windows folder or installer where users run
 Recommended layout:
 
 ```text
-SubtitlePlayer-ASR/
+  SubtitlePlayer-ASR/
   字幕播放器.cmd
-  字幕播放器.html
+  player.html
   js/
   css/
   asr-service/

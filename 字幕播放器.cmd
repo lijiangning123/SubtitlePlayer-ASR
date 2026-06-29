@@ -4,16 +4,11 @@ cd /d "%~dp0"
 
 set "ASR_DIR=%CD%\asr-service"
 set "PYTHON_EXE=%ASR_DIR%\runtime\python\python.exe"
-set "PLAYER="
+set "PLAYER=%CD%\player.html"
 
-for %%F in (*.html) do (
-  set "PLAYER=%%~fF"
-  goto found_player
-)
-
-:found_player
-if "%PLAYER%"=="" (
-  echo Missing player html file.
+if not exist "%PLAYER%" (
+  echo Missing player file:
+  echo %PLAYER%
   pause
   exit /b 1
 )
