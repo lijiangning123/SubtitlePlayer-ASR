@@ -18,8 +18,13 @@ if errorlevel 1 goto failed
 "%GIT%" add -A
 if errorlevel 1 goto failed
 
-"%GIT%" commit -m "Integrate local ASR subtitle generation"
-if errorlevel 1 goto failed
+"%GIT%" diff --cached --quiet
+if errorlevel 1 (
+  "%GIT%" commit -m "Integrate local ASR subtitle generation"
+  if errorlevel 1 goto failed
+) else (
+  echo Nothing new to commit. Continuing to push existing commit.
+)
 
 "%GIT%" remote remove github 2>nul
 "%GIT%" remote add github "%REPO_URL%"
