@@ -9,33 +9,17 @@ its MIT notice as a component-level license.
 ## Runtime
 
 The integrated path uses AsrTools-compatible runtime files under
-`asr-service/runtime`. If they are not present during local development, it can
-fall back to the known external AsrTools location `I:\subtitleplayer`.
-
-On Windows run:
-
-```powershell
-.\run-asr-service.cmd
-```
+`asr-service/runtime`.
 
 ## Run
 
-```powershell
-.\run-asr-service.cmd
-```
-
-Then open the player, load a local video, and click `生成字幕`.
+Use the root `字幕播放器.cmd` launcher. It starts this service and then opens the
+player.
 
 Check service health:
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:28768/api/health
-```
-
-If the player reports a timeout, run:
-
-```powershell
-.\check-asr-service.ps1
 ```
 
 ## Engines
@@ -61,5 +45,5 @@ The OpenAI path uses FFmpeg to extract MP3 audio, then requests SRT output.
 - Original SubtitlePlayer frontend: MIT component license.
 - AsrTools: GPL-3.0. Include source or a compliant source-code offer when
   redistributing bundles that include AsrTools.
-- FFmpeg: license depends on build configuration. The referenced
-  `I:\subtitleplayer\ffmpeg.exe` build reports GPL-enabled configuration.
+- FFmpeg: license depends on build configuration. Include license/source
+  information matching the bundled FFmpeg binary.

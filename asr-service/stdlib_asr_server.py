@@ -17,19 +17,15 @@ APP_DIR = Path(__file__).resolve().parent
 
 
 def _candidate_paths() -> dict[str, list[Path]]:
-    asrtools_home = os.getenv("ASRTOOLS_HOME")
     ffmpeg_env = os.getenv("FFMPEG_EXE")
     return {
         "asrtools_app": [
-            Path(asrtools_home) / "app" if asrtools_home else Path(),
             APP_DIR / "runtime" / "asrtools" / "app",
-            Path(r"I:\subtitleplayer\app"),
         ],
         "ffmpeg": [
             Path(ffmpeg_env) if ffmpeg_env else Path(),
             APP_DIR / "runtime" / "ffmpeg" / "bin" / "ffmpeg.exe",
             APP_DIR / "runtime" / "ffmpeg" / "ffmpeg.exe",
-            Path(r"I:\subtitleplayer\ffmpeg.exe"),
         ],
     }
 

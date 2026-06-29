@@ -1,44 +1,37 @@
 # Packaging Notes
 
-Goal: create a no-install Windows folder or installer where users run `start-player.cmd` only.
+Goal: create a no-install Windows folder or installer where users run
+`字幕播放器.cmd` only.
 
 Recommended layout:
 
 ```text
 SubtitlePlayer-ASR/
-  start-player.cmd
+  字幕播放器.cmd
   字幕播放器.html
   js/
   css/
   asr-service/
-    server.py
-    run-asr-service.cmd
+    stdlib_asr_server.py
     runtime/
       python/
       ffmpeg/
+      asrtools/
 ```
 
 Build options:
 
 1. Portable runtime folder
    - Bundle Python into `asr-service/runtime/python`.
-   - Install `requirements.txt` and the selected ASR CLI into that Python runtime.
-   - Bundle FFmpeg into `asr-service/runtime/ffmpeg/bin/ffmpeg.exe`.
+   - Bundle AsrTools into `asr-service/runtime/asrtools/app`.
+   - Bundle FFmpeg into `asr-service/runtime/ffmpeg/ffmpeg.exe` or
+     `asr-service/runtime/ffmpeg/bin/ffmpeg.exe`.
    - Ship the whole folder.
 
-   Use the helper after preparing those two runtime folders:
-
-   ```powershell
-   cd packaging
-   powershell -ExecutionPolicy Bypass -File .\build-portable.ps1 `
-     -PythonRuntime "D:\runtime\python" `
-     -FfmpegRuntime "D:\runtime\ffmpeg"
-   ```
-
 2. Frozen ASR executable
-   - Build `server.py` into an exe with PyInstaller or Nuitka.
+   - Build `stdlib_asr_server.py` into an exe with PyInstaller or Nuitka.
    - Bundle FFmpeg beside the exe.
-   - Update `run-asr-service.cmd` to run the exe instead of Python.
+   - Update `字幕播放器.cmd` to run the exe instead of Python.
 
 License note:
 

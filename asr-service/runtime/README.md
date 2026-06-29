@@ -15,7 +15,8 @@ asr-service/runtime/
       ffmpeg.exe
 ```
 
-When `runtime/python/python.exe` exists, `run-asr-service.cmd` uses it directly and does not require the user to install Python.
+When `runtime/python/python.exe` exists, the root `字幕播放器.cmd` launcher uses it
+directly and does not require the user to install Python.
 
 When `runtime/ffmpeg/bin/ffmpeg.exe` exists, `server.py` uses it before checking the system PATH.
 

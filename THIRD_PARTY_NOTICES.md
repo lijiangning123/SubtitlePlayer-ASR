@@ -29,8 +29,8 @@ AsrTools or other GPL components.
 ## FFmpeg
 
 - Upstream: https://ffmpeg.org/
-- License: depends on build configuration. The `I:\subtitleplayer\ffmpeg.exe`
-  build reports GPL-enabled configuration.
+- License: depends on build configuration. If the bundled FFmpeg binary is
+  GPL-enabled, include GPL-compatible license and source information.
 - Notes: include FFmpeg license notices and source-code availability
   information when redistributing binaries.
 

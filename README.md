@@ -4,7 +4,7 @@
 
 一个集成本地 ASR 的网页视频播放器，专注于网课复习场景下的字幕生成、浏览与编辑。支持视频加载、本地 ASR 生成 SRT、SRT/VTT/TXT 字幕上传、实时 CC 显示、文稿面板、编辑导出、多主题切换、键盘快捷键，所有数据可持久化。
 
-推荐运行 `字幕播放器.cmd` 或 `start-player.cmd`，它会启动本地 ASR 服务并打开播放器页面。
+推荐运行 `字幕播放器.cmd`，它会启动本地 ASR 服务并打开播放器页面。
 
 ---
 
@@ -17,7 +17,7 @@
 
 > 也支持直接拖拽视频和字幕文件到页面上。
 
-如果要使用「🎙 生成字幕」，推荐从项目根目录运行：
+如果要使用「🎙 生成字幕」，从项目根目录运行：
 
 ```powershell
 .\字幕播放器.cmd
@@ -25,32 +25,9 @@
 
 它会先打开本地 ASR 服务窗口，再打开播放器页面。生成字幕时请保持 ASR 服务窗口运行。
 
-如果要把 `I:\subtitleplayer` 里的 AsrTools 运行时整合到本项目目录，先运行：
-
-```powershell
-.\integrate-asrtools-runtime.cmd
-```
-
-脚本会复制：
-
-- `I:\subtitleplayer\runtime` -> `asr-service\runtime\python`
-- `I:\subtitleplayer\ffmpeg.exe` -> `asr-service\runtime\ffmpeg\ffmpeg.exe`
-- `I:\subtitleplayer\app` -> `asr-service\runtime\asrtools\app`
-
-复制完成后，本项目会优先使用项目内 runtime，不再依赖 I 盘路径。
-
 ### 本地 ASR 生成字幕
 
-「🎙 生成字幕」按钮会调用本机 `asr-service`。整合版优先使用项目内 `asr-service/runtime` 中的 Python、FFmpeg 和 AsrTools；如果这些文件不存在，会回退到已配置的外部 AsrTools 路径或系统环境。
-
-Windows 可以直接运行：
-
-```powershell
-cd asr-service
-.\run-asr-service.cmd
-```
-
-`run-asr-service.cmd` 会优先使用 `asr-service/runtime` 中的内置 Python、FFmpeg 和 AsrTools；没有内置 runtime 时，才回退到 `I:\subtitleplayer` 或系统环境。
+「🎙 生成字幕」按钮会调用本机 `asr-service`。整合版使用项目内 `asr-service/runtime` 中的 Python、FFmpeg 和 AsrTools，不要求用户单独安装 Python 或 FFmpeg。
 
 启动服务后，打开本地视频并点击「🎙 生成字幕」。默认引擎是 AsrTools 的 `bijian` / B 接口，会返回 SRT 并自动加载到现有字幕面板。
 
