@@ -1,21 +1,25 @@
-MIT License
+SubtitlePlayer-ASR Integrated Distribution License
 
-Copyright (c) 2025 Subtitle Player Contributors
+SPDX-License-Identifier: GPL-3.0-only
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This integrated distribution is intended to be distributed under the GNU
+General Public License version 3.0 only (GPL-3.0-only).
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Why GPL applies:
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+- The original SubtitlePlayer frontend is MIT-licensed.
+- The integrated ASR runtime can include AsrTools / related ASR code, which is
+  GPL-3.0.
+- When those components are distributed together as one runnable package, the
+  combined distribution must be handled under GPL-compatible terms.
+
+Original MIT-licensed frontend code remains under its original MIT license.
+See THIRD_PARTY_NOTICES.md for component-level license notes.
+
+If you distribute a package that includes AsrTools, FFmpeg, Python, PyQt, or
+other third-party components, you must include their corresponding license
+texts and provide the corresponding source code or valid source-code offers
+where required by those licenses.
+
+GPL-3.0 text:
+https://www.gnu.org/licenses/gpl-3.0.txt

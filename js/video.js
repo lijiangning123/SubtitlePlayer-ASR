@@ -44,6 +44,7 @@ DP.loadVolumeForVideo = function() {
 
 DP.loadVideo = function(file) {
   const url = URL.createObjectURL(file);
+  DP.currentVideoFile = file;
   DP.video.src = url;
   DP.playerContainer.style.display = 'block';
   DP.videoPlh.style.display = 'none';
@@ -153,6 +154,7 @@ DP.videoInput.addEventListener('change', (e) => {
 
 // 打开网络视频 URL
 DP.loadVideoFromURL = function(url) {
+  DP.currentVideoFile = null;
   DP.video.src = url;
   DP.playerContainer.style.display = 'block';
   DP.videoPlh.style.display = 'none';

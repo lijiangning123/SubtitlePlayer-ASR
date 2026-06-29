@@ -17,6 +17,7 @@
       <button class="btn btn-sm" id="btnOpenURL" title="打开网络视频">🔗 打开URL</button>
       <button class="btn btn-sm" id="btnOpenSub" title="上传字幕文件 (SRT / VTT)">📄 上传字幕</button>
       <input type="file" id="subInput" accept=".srt,.vtt,.txt" style="display:none">
+      <button class="btn btn-sm accent" id="btnGenerateSub" title="调用本地 ASR 服务生成字幕">🎙 生成字幕</button>
       <button class="btn btn-sm" id="btnOpenNotes" title="上传笔记文件 (TXT)">📝 上传笔记</button>
       <input type="file" id="notesFileInput" accept=".txt" style="display:none">
       <button class="btn btn-sm" id="btnToggleCC" title="开关字幕显示">💬 CC</button>
@@ -144,6 +145,7 @@
   <script src="js/memory.js"></script>
   <script src="js/parser.js"></script>
   <script src="js/subtitles.js"></script>
+  <script src="js/asr.js"></script>
   <script src="js/edit.js"></script>
   <script src="js/notes.js"></script>
   <script src="js/video.js"></script>
