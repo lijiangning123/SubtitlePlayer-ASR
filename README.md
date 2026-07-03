@@ -76,14 +76,15 @@
 | 复制总结 | 总结弹窗中点击「📋 复制」 |
 | 导出 TXT | 总结弹窗中点击「📥 导出」 |
 
-总结通过本地 `asr-service` 调用模型 API，API Key 不会写入浏览器页面。配置方法：
+总结通过本地 `asr-service` 调用模型 API，API Key 不会提交到 GitHub。推荐配置方法：
 
-1. 复制 `asr-service/summary-config.example.json` 为 `asr-service/summary-config.json`
-2. 在 `summary-config.json` 中选择 `provider`：`openai`、`doubao`、`qwen` 或 `custom`
-3. 填入对应供应商的 `apiKey` 和 `model`
-4. 重新运行 `字幕播放器.cmd`
+1. 运行 `字幕播放器.cmd`
+2. 点击文稿面板标题栏「⚙ 模型」
+3. 选择 ChatGPT / 豆包 / 千问
+4. 填入 API Key、模型名和 Base URL
+5. 点击「💾 保存配置」
 
-`summary-config.json` 已加入 `.gitignore`，不要提交到 GitHub。
+保存后会生成 `asr-service/summary-config.json`。该文件已加入 `.gitignore`，不要提交到 GitHub。也可以手动复制 `asr-service/summary-config.example.json` 为 `summary-config.json` 后编辑。
 
 ### 编辑字幕
 

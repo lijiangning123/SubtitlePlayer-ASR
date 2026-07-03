@@ -4,6 +4,29 @@ window.DP = window.DP || {};
 
 (function() {
   const SUMMARY_ENDPOINT = 'http://127.0.0.1:28778/api/summarize';
+  const SUMMARY_CONFIG_ENDPOINT = 'http://127.0.0.1:28778/api/summary-config';
+  const PROVIDER_DEFAULTS = {
+    openai: {
+      model: 'gpt-5.2',
+      baseUrl: 'https://api.openai.com/v1',
+      help: 'ChatGPT / OpenAI：到 platform.openai.com/api-keys 创建 API Key。'
+    },
+    qwen: {
+      model: 'qwen-plus',
+      baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+      help: '通义千问：到阿里云百炼控制台创建 API Key。常用模型 qwen-plus。'
+    },
+    doubao: {
+      model: '',
+      baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
+      help: '豆包：到火山方舟控制台创建 API Key，并填入控制台中的模型或 endpoint id。'
+    },
+    custom: {
+      model: '',
+      baseUrl: '',
+      help: '自定义：填写兼容 OpenAI Chat Completions 的 Base URL、API Key 和模型名。'
+    }
+  };
   const STOPWORDS = new Set([
     '这个','那个','然后','就是','我们','你们','他们','它们','因为','所以','如果','但是','还是','可以','可能','没有','不是','已经',
     '进行','通过','一个','一些','一种','这里','那里','这些','那些','什么','怎么','时候','现在','其实','大家','比较','需要','以及',
@@ -222,6 +245,72 @@ window.DP = window.DP || {};
     DP.btnSummary.textContent = isBusy ? '🧠 总结中...' : '🧠 总结';
   };
 
+  DP.applySummaryProviderDefaults = function applySummaryProviderDefaults(force) {
+    const provider = DP.summaryProvider?.value || 'openai';
+    const defaults = PROVIDER_DEFAULTS[provider] || PROVIDER_DEFAULTS.custom;
+    if (force || !DP.summaryModel.value.trim()) DP.summaryModel.value = defaults.model;
+    if (force || !DP.summaryBaseUrl.value.trim()) DP.summaryBaseUrl.value = defaults.baseUrl;
+    DP.summaryConfigHelp.textContent = defaults.help;
+  };
+
+  DP.openSummaryConfig = async function openSummaryConfig() {
+    if (!DP.summaryConfigModal) return;
+    DP.summaryConfigModal.classList.add('visible');
+    DP.summaryConfigModal.setAttribute('aria-hidden', 'false');
+    DP.summaryConfigStatus.textContent = '正在读取本地配置...';
+    DP.summaryApiKey.value = '';
+    try {
+      const resp = await DP.fetchWithTimeout(SUMMARY_CONFIG_ENDPOINT, { method: 'GET' }, 5000);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const data = await resp.json();
+      DP.summaryProvider.value = data.provider || 'openai';
+      DP.summaryModel.value = data.model || '';
+      DP.summaryBaseUrl.value = data.baseUrl || '';
+      DP.applySummaryProviderDefaults(false);
+      DP.summaryConfigStatus.textContent = data.apiKeySet ? '已保存 API Key。留空可保留原 Key。' : '尚未保存 API Key。';
+    } catch (err) {
+      DP.summaryConfigStatus.textContent = '无法连接本地服务，请先通过“字幕播放器.cmd”启动。';
+      DP.applySummaryProviderDefaults(false);
+    }
+  };
+
+  DP.closeSummaryConfig = function closeSummaryConfig() {
+    DP.summaryConfigModal.classList.remove('visible');
+    DP.summaryConfigModal.setAttribute('aria-hidden', 'true');
+  };
+
+  DP.saveSummaryConfig = async function saveSummaryConfig() {
+    const payload = {
+      provider: DP.summaryProvider.value,
+      apiKey: DP.summaryApiKey.value.trim(),
+      model: DP.summaryModel.value.trim(),
+      baseUrl: DP.summaryBaseUrl.value.trim()
+    };
+    DP.btnSummaryConfigSave.disabled = true;
+    DP.btnSummaryConfigSave.textContent = '💾 保存中...';
+    try {
+      const resp = await DP.fetchWithTimeout(SUMMARY_CONFIG_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }, 10000);
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(data.detail || ('HTTP ' + resp.status));
+      DP.summaryProvider.value = data.provider || payload.provider;
+      DP.summaryModel.value = data.model || payload.model;
+      DP.summaryBaseUrl.value = data.baseUrl || payload.baseUrl;
+      DP.summaryApiKey.value = '';
+      DP.summaryConfigStatus.textContent = '配置已保存。现在可以关闭窗口并点击“总结”。';
+      DP.showToast('✅ 模型配置已保存');
+    } catch (err) {
+      DP.summaryConfigStatus.textContent = '保存失败：' + err.message;
+      DP.showToast('⚠ 保存模型配置失败');
+    } finally {
+      DP.btnSummaryConfigSave.disabled = false;
+      DP.btnSummaryConfigSave.textContent = '💾 保存配置';
+    }
+  };
+
   DP.generateVideoSummary = async function generateVideoSummary() {
     if (!DP.subtitles || DP.subtitles.length === 0) {
       DP.showToast('⚠ 请先上传或生成字幕');
@@ -291,6 +380,10 @@ window.DP = window.DP || {};
   };
 
   if (DP.btnSummary) DP.btnSummary.addEventListener('click', DP.generateVideoSummary);
+  if (DP.btnSummaryConfig) DP.btnSummaryConfig.addEventListener('click', DP.openSummaryConfig);
+  if (DP.summaryProvider) DP.summaryProvider.addEventListener('change', () => DP.applySummaryProviderDefaults(true));
+  if (DP.btnSummaryConfigClose) DP.btnSummaryConfigClose.addEventListener('click', DP.closeSummaryConfig);
+  if (DP.btnSummaryConfigSave) DP.btnSummaryConfigSave.addEventListener('click', DP.saveSummaryConfig);
   if (DP.btnSummaryClose) DP.btnSummaryClose.addEventListener('click', DP.closeSummary);
   if (DP.btnSummaryCopy) DP.btnSummaryCopy.addEventListener('click', DP.copySummary);
   if (DP.btnSummaryExport) DP.btnSummaryExport.addEventListener('click', DP.exportSummary);
@@ -299,7 +392,13 @@ window.DP = window.DP || {};
       if (event.target === DP.summaryModal) DP.closeSummary();
     });
   }
+  if (DP.summaryConfigModal) {
+    DP.summaryConfigModal.addEventListener('click', (event) => {
+      if (event.target === DP.summaryConfigModal) DP.closeSummaryConfig();
+    });
+  }
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && DP.summaryModal?.classList.contains('visible')) DP.closeSummary();
+    if (event.key === 'Escape' && DP.summaryConfigModal?.classList.contains('visible')) DP.closeSummaryConfig();
   });
 })();

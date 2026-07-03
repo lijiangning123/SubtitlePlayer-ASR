@@ -43,9 +43,11 @@ Supported built-in providers:
 
 Recommended configuration:
 
-1. Copy `summary-config.example.json` to `summary-config.json`.
-2. Set `provider`, `apiKey`, and `model`.
-3. Restart `字幕播放器.cmd`.
+1. Run the root `字幕播放器.cmd` launcher.
+2. Click `⚙ 模型` in the transcript panel.
+3. Select OpenAI, Qwen, Doubao, or custom provider.
+4. Fill API Key, model, and Base URL.
+5. Click save.
 
 `summary-config.json` is ignored by Git. Do not commit API keys.
 

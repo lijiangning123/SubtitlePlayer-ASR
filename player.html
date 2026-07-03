@@ -98,6 +98,7 @@
         <span class="panel-header-left">📋</span>
         <button class="btn btn-sm" id="btnAutoScroll" title="自动滚动：开">📍 跟滚</button>
         <button class="btn btn-sm accent" id="btnSummary" title="根据当前字幕生成视频总结">🧠 总结</button>
+        <button class="btn btn-sm" id="btnSummaryConfig" title="配置 ChatGPT / 豆包 / 千问">⚙ 模型</button>
         <button class="btn btn-sm" id="btnEdit" title="编辑字幕">✏️ 编辑</button>
         <button class="btn btn-sm" id="btnNotes" title="笔记">📝 笔记</button>
         <span style="font-size:0.7rem;font-weight:400;color:var(--text-dim);" id="subCount"></span>
@@ -156,6 +157,46 @@
         <button class="btn btn-sm" id="btnSummaryExport" title="导出 TXT">📥 导出</button>
       </div>
       <pre class="summary-content" id="summaryContent"></pre>
+    </div>
+  </div>
+
+  <!-- Summary model config -->
+  <div class="summary-modal" id="summaryConfigModal" aria-hidden="true">
+    <div class="summary-dialog summary-config-dialog" role="dialog" aria-modal="true" aria-labelledby="summaryConfigTitle">
+      <div class="summary-header">
+        <div>
+          <h3 id="summaryConfigTitle">模型配置</h3>
+          <p id="summaryConfigStatus">配置用于视频总结的大模型服务。</p>
+        </div>
+        <button class="summary-close" id="btnSummaryConfigClose" title="关闭">×</button>
+      </div>
+      <div class="summary-config-form">
+        <label>
+          <span>供应商</span>
+          <select id="summaryProvider">
+            <option value="openai">ChatGPT / OpenAI</option>
+            <option value="qwen">通义千问</option>
+            <option value="doubao">豆包 / 火山方舟</option>
+            <option value="custom">自定义 OpenAI-compatible</option>
+          </select>
+        </label>
+        <label>
+          <span>API Key</span>
+          <input type="password" id="summaryApiKey" placeholder="粘贴 API Key；留空表示保留已保存的 Key">
+        </label>
+        <label>
+          <span>模型</span>
+          <input type="text" id="summaryModel" placeholder="例如 gpt-5.2 / qwen-plus / 火山方舟模型或 endpoint id">
+        </label>
+        <label>
+          <span>Base URL</span>
+          <input type="text" id="summaryBaseUrl" placeholder="模型接口地址">
+        </label>
+        <div class="summary-config-help" id="summaryConfigHelp"></div>
+      </div>
+      <div class="summary-actions">
+        <button class="btn btn-sm accent" id="btnSummaryConfigSave" title="保存模型配置">💾 保存配置</button>
+      </div>
     </div>
   </div>
 

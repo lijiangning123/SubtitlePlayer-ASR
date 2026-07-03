@@ -180,6 +180,81 @@ def load_summary_config() -> dict:
     }
 
 
+def public_summary_config() -> dict:
+    config = load_summary_config()
+    return {
+        "provider": config.get("provider") or "openai",
+        "baseUrl": config.get("base_url") or "",
+        "model": config.get("model") or "",
+        "apiType": config.get("api_type") or "",
+        "apiKeySet": bool(config.get("api_key")),
+    }
+
+
+def save_summary_config(data: dict) -> dict:
+    provider = str(data.get("provider") or "openai").strip().lower()
+    api_key = str(data.get("apiKey") or "").strip()
+    model = str(data.get("model") or "").strip()
+    base_url = str(data.get("baseUrl") or "").strip()
+    api_type = str(data.get("apiType") or "").strip()
+
+    current = _read_json_file(APP_DIR / "summary-config.json")
+    existing = load_summary_config()
+    if not api_key and existing.get("provider") == provider:
+        api_key = existing.get("api_key", "")
+
+    defaults = {
+        "openai": {
+            "model": "gpt-5.2",
+            "baseUrl": "https://api.openai.com/v1",
+            "apiType": "responses",
+        },
+        "qwen": {
+            "model": "qwen-plus",
+            "baseUrl": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+            "apiType": "chat_completions",
+        },
+        "doubao": {
+            "model": "",
+            "baseUrl": "https://ark.cn-beijing.volces.com/api/v3",
+            "apiType": "chat_completions",
+        },
+        "custom": {
+            "model": "",
+            "baseUrl": "",
+            "apiType": "chat_completions",
+        },
+    }
+    default = defaults.get(provider, defaults["custom"])
+    model = model or default["model"]
+    base_url = base_url or default["baseUrl"]
+    api_type = api_type or default["apiType"]
+
+    if not api_key:
+        raise RuntimeError("请填写 API Key")
+    if not model:
+        raise RuntimeError("请填写模型名称。豆包通常需要填写火山方舟控制台里的 endpoint/model id。")
+    if not base_url:
+        raise RuntimeError("请填写 Base URL")
+
+    next_config = {key: value for key, value in current.items() if key.startswith("_")}
+    next_config["provider"] = provider
+    next_config[provider] = {
+        "apiKey": api_key,
+        "model": model,
+        "baseUrl": base_url,
+    }
+    if provider == "custom":
+        next_config[provider]["apiType"] = api_type
+
+    config_path = APP_DIR / "summary-config.json"
+    config_path.write_text(
+        json.dumps(next_config, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    return public_summary_config()
+
+
 def _camel_name(name: str) -> str:
     parts = name.split("_")
     return parts[0] + "".join(part.capitalize() for part in parts[1:])
@@ -380,6 +455,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         path = urlparse(self.path).path
+        if path == "/api/summary-config":
+            _json_response(self, 200, public_summary_config())
+            return
         if path != "/api/health":
             _json_response(self, 404, {"detail": "not found"})
             return
@@ -405,6 +483,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         path = urlparse(self.path).path
+        if path == "/api/summary-config":
+            self._handle_summary_config()
+            return
         if path == "/api/summarize":
             self._handle_summarize()
             return
@@ -469,6 +550,15 @@ class Handler(BaseHTTPRequestHandler):
             )
         except Exception as exc:
             _json_response(self, 500, {"detail": str(exc)})
+
+    def _handle_summary_config(self) -> None:
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            data = json.loads(self.rfile.read(length).decode("utf-8"))
+            saved = save_summary_config(data)
+            _json_response(self, 200, saved)
+        except Exception as exc:
+            _json_response(self, 400, {"detail": str(exc)})
 
     def log_message(self, format: str, *args) -> None:
         print("%s - %s" % (self.address_string(), format % args))
