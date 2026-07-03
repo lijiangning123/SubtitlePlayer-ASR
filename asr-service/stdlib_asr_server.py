@@ -145,10 +145,11 @@ def load_summary_config() -> dict:
 
     if provider == "openai":
         api_key = pick("OPENAI_API_KEY") or _file_text(APP_DIR / "openai-key.txt")
+        base_url = pick("OPENAI_BASE_URL", default="https://api.openai.com/v1")
         return {
             "provider": "openai",
-            "api_type": "responses",
-            "base_url": pick("OPENAI_BASE_URL", default="https://api.openai.com/v1"),
+            "api_type": "responses" if base_url.rstrip("/") == "https://api.openai.com/v1" else "chat_completions",
+            "base_url": base_url,
             "api_key": api_key,
             "model": pick("OPENAI_SUMMARY_MODEL", default="gpt-5.2"),
         }
@@ -229,6 +230,8 @@ def save_summary_config(data: dict) -> dict:
     model = model or default["model"]
     base_url = base_url or default["baseUrl"]
     api_type = api_type or default["apiType"]
+    if provider == "openai" and base_url.rstrip("/") != "https://api.openai.com/v1":
+        api_type = "chat_completions"
 
     if not api_key:
         raise RuntimeError("请填写 API Key")

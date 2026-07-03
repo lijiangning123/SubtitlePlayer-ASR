@@ -3,13 +3,13 @@ window.DP = window.DP || {};
 // ==================== 字幕总结 ====================
 
 (function() {
-  const SUMMARY_ENDPOINT = 'http://127.0.0.1:28778/api/summarize';
-  const SUMMARY_CONFIG_ENDPOINT = 'http://127.0.0.1:28778/api/summary-config';
+  const SUMMARY_ENDPOINT = 'http://127.0.0.1:28788/api/summarize';
+  const SUMMARY_CONFIG_ENDPOINT = 'http://127.0.0.1:28788/api/summary-config';
   const PROVIDER_DEFAULTS = {
     openai: {
       model: 'gpt-5.2',
       baseUrl: 'https://api.openai.com/v1',
-      help: 'ChatGPT / OpenAI：到 platform.openai.com/api-keys 创建 API Key。'
+      help: 'ChatGPT / OpenAI：官方地址用 https://api.openai.com/v1。中转站也可填在 Base URL，程序会自动改用 Chat Completions。'
     },
     qwen: {
       model: 'qwen-plus',
@@ -24,7 +24,7 @@ window.DP = window.DP || {};
     custom: {
       model: '',
       baseUrl: '',
-      help: '自定义：填写兼容 OpenAI Chat Completions 的 Base URL、API Key 和模型名。'
+      help: '自定义：适合中转站。填写兼容 OpenAI Chat Completions 的 Base URL、API Key 和模型名。'
     }
   };
   const STOPWORDS = new Set([
