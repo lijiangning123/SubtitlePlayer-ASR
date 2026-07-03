@@ -97,6 +97,7 @@
       <h2>
         <span class="panel-header-left">📋</span>
         <button class="btn btn-sm" id="btnAutoScroll" title="自动滚动：开">📍 跟滚</button>
+        <button class="btn btn-sm accent" id="btnSummary" title="根据当前字幕生成视频总结">🧠 总结</button>
         <button class="btn btn-sm" id="btnEdit" title="编辑字幕">✏️ 编辑</button>
         <button class="btn btn-sm" id="btnNotes" title="笔记">📝 笔记</button>
         <span style="font-size:0.7rem;font-weight:400;color:var(--text-dim);" id="subCount"></span>
@@ -140,12 +141,31 @@
   <!-- Toast -->
   <div class="toast" id="toast"></div>
 
+  <!-- Summary dialog -->
+  <div class="summary-modal" id="summaryModal" aria-hidden="true">
+    <div class="summary-dialog" role="dialog" aria-modal="true" aria-labelledby="summaryTitle">
+      <div class="summary-header">
+        <div>
+          <h3 id="summaryTitle">视频总结</h3>
+          <p id="summaryMeta"></p>
+        </div>
+        <button class="summary-close" id="btnSummaryClose" title="关闭">×</button>
+      </div>
+      <div class="summary-actions">
+        <button class="btn btn-sm" id="btnSummaryCopy" title="复制总结文本">📋 复制</button>
+        <button class="btn btn-sm" id="btnSummaryExport" title="导出 TXT">📥 导出</button>
+      </div>
+      <pre class="summary-content" id="summaryContent"></pre>
+    </div>
+  </div>
+
   <script src="js/setup.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/memory.js"></script>
   <script src="js/parser.js"></script>
   <script src="js/subtitles.js"></script>
   <script src="js/asr.js"></script>
+  <script src="js/summary.js"></script>
   <script src="js/edit.js"></script>
   <script src="js/notes.js"></script>
   <script src="js/video.js"></script>

@@ -17,6 +17,13 @@ DP.btnMuteToast    = document.getElementById('btnMuteToast');
 DP.btnTheme        = document.getElementById('btnTheme');
 DP.themeMenu       = document.getElementById('themeMenu');
 DP.btnAutoScroll   = document.getElementById('btnAutoScroll');
+DP.btnSummary      = document.getElementById('btnSummary');
+DP.summaryModal    = document.getElementById('summaryModal');
+DP.summaryMeta     = document.getElementById('summaryMeta');
+DP.summaryContent  = document.getElementById('summaryContent');
+DP.btnSummaryClose = document.getElementById('btnSummaryClose');
+DP.btnSummaryCopy  = document.getElementById('btnSummaryCopy');
+DP.btnSummaryExport = document.getElementById('btnSummaryExport');
 DP.btnEdit         = document.getElementById('btnEdit');
 DP.editToolbar     = document.getElementById('editToolbar');
 DP.btnEditNew      = document.getElementById('btnEditNew');
@@ -96,6 +103,7 @@ DP.notesFileHandle   = null;
 DP.audioCtx           = null;
 DP.gainNode           = null;
 DP.customVolume       = 100;  // 0-300%
+DP.currentSummaryText = '';
 
 // ==================== 多标签页隔离 ====================
 // window.name 特性：刷新保留、不被跨标签页共享、复制标签页时为空白

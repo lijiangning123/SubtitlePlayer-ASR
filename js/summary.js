@@ -1,0 +1,247 @@
+window.DP = window.DP || {};
+
+// ==================== 字幕总结 ====================
+
+(function() {
+  const STOPWORDS = new Set([
+    '这个','那个','然后','就是','我们','你们','他们','它们','因为','所以','如果','但是','还是','可以','可能','没有','不是','已经',
+    '进行','通过','一个','一些','一种','这里','那里','这些','那些','什么','怎么','时候','现在','其实','大家','比较','需要','以及',
+    '或者','对于','里面','出来','这种','这样','那么','非常','的话','一下','比如','由于','因此','并且','而且','同时','首先','最后',
+    'the','and','that','this','with','from','you','your','are','was','were','for','not','but','can','will','have','has','into','about'
+  ]);
+
+  function cleanText(text) {
+    return String(text || '')
+      .replace(/<[^>]+>/g, '')
+      .replace(/\{\\.*?\}/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function cueToSentence(cue) {
+    return {
+      start: cue.start,
+      end: cue.end,
+      text: cleanText(cue.text)
+    };
+  }
+
+  function splitCueText(cue) {
+    const parts = cue.text
+      .split(/(?<=[。！？!?；;])\s*|\n+/)
+      .map(cleanText)
+      .filter(Boolean);
+    if (parts.length === 0 && cue.text) return [cue];
+    return parts.map(text => ({ start: cue.start, end: cue.end, text }));
+  }
+
+  function buildSentences() {
+    return (DP.subtitles || [])
+      .map(cueToSentence)
+      .filter(cue => cue.text.length > 0)
+      .flatMap(splitCueText)
+      .filter(cue => cue.text.length >= 4);
+  }
+
+  function tokenize(text) {
+    const normalized = cleanText(text).toLowerCase();
+    const tokens = [];
+    if (window.Intl && Intl.Segmenter) {
+      const segmenter = new Intl.Segmenter('zh-CN', { granularity: 'word' });
+      for (const item of segmenter.segment(normalized)) {
+        const word = item.segment.trim();
+        if (!item.isWordLike || word.length < 2 || STOPWORDS.has(word)) continue;
+        tokens.push(word);
+      }
+      if (tokens.length > 0) return tokens;
+    }
+
+    const latin = normalized.match(/[a-z0-9][a-z0-9-]{1,}/g) || [];
+    latin.forEach(word => { if (!STOPWORDS.has(word)) tokens.push(word); });
+
+    const chineseRuns = normalized.match(/[\u4e00-\u9fa5]{2,}/g) || [];
+    chineseRuns.forEach(run => {
+      for (let i = 0; i < run.length - 1; i++) {
+        const word = run.slice(i, i + 2);
+        if (!STOPWORDS.has(word)) tokens.push(word);
+      }
+    });
+    return tokens;
+  }
+
+  function keywordStats(sentences) {
+    const freq = new Map();
+    sentences.forEach(sentence => {
+      tokenize(sentence.text).forEach(token => {
+        freq.set(token, (freq.get(token) || 0) + 1);
+      });
+    });
+    return Array.from(freq.entries())
+      .filter(([word, count]) => count >= 2 && word.length <= 12)
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'zh-CN'));
+  }
+
+  function scoreSentence(sentence, keywordMap) {
+    const words = tokenize(sentence.text);
+    if (words.length === 0) return 0;
+    const keywordScore = words.reduce((sum, word) => sum + Math.min(keywordMap.get(word) || 0, 8), 0) / Math.sqrt(words.length);
+    const lengthScore = Math.min(sentence.text.length, 80) / 80;
+    const signalScore = /重点|核心|关键|结论|原因|方法|步骤|问题|注意|建议|总结|所以|因此|首先|最后/.test(sentence.text) ? 2 : 0;
+    return keywordScore + lengthScore + signalScore;
+  }
+
+  function pickTopSentences(sentences, keywords, limit) {
+    const keywordMap = new Map(keywords);
+    const seen = new Set();
+    return sentences
+      .map(sentence => ({ ...sentence, score: scoreSentence(sentence, keywordMap) }))
+      .filter(item => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .filter(item => {
+        const compact = item.text.replace(/\W/g, '').slice(0, 40);
+        if (seen.has(compact)) return false;
+        seen.add(compact);
+        return true;
+      })
+      .slice(0, limit)
+      .sort((a, b) => a.start - b.start);
+  }
+
+  function buildChapters(sentences, keywords) {
+    if (sentences.length === 0) return [];
+    const maxEnd = Math.max(...sentences.map(item => item.end || item.start || 0));
+    const minStart = Math.min(...sentences.map(item => item.start || 0));
+    const duration = Math.max(1, maxEnd - minStart);
+    const targetCount = Math.max(4, Math.min(10, Math.ceil(duration / 360)));
+    const blockSize = Math.max(180, duration / targetCount);
+    const blocks = [];
+
+    sentences.forEach(sentence => {
+      const idx = Math.min(targetCount - 1, Math.floor((sentence.start - minStart) / blockSize));
+      if (!blocks[idx]) {
+        blocks[idx] = {
+          start: minStart + idx * blockSize,
+          end: Math.min(maxEnd, minStart + (idx + 1) * blockSize),
+          sentences: []
+        };
+      }
+      blocks[idx].sentences.push(sentence);
+    });
+
+    return blocks.filter(Boolean).map(block => {
+      const picks = pickTopSentences(block.sentences, keywords, 2);
+      return {
+        start: block.sentences[0]?.start ?? block.start,
+        end: block.sentences[block.sentences.length - 1]?.end ?? block.end,
+        text: picks.length > 0 ? picks.map(item => item.text).join(' ') : block.sentences.slice(0, 2).map(item => item.text).join(' ')
+      };
+    });
+  }
+
+  function formatKeywordLine(keywords) {
+    return keywords.slice(0, 18).map(([word, count]) => `${word}(${count})`).join('、') || '暂无明显高频词';
+  }
+
+  function buildSummaryText() {
+    const sentences = buildSentences();
+    if (sentences.length === 0) return '';
+
+    const keywords = keywordStats(sentences);
+    const highlights = pickTopSentences(sentences, keywords, Math.min(10, Math.max(5, Math.ceil(sentences.length / 18))));
+    const chapters = buildChapters(sentences, keywords);
+    const videoName = DP.currentVideoName || '当前视频';
+    const totalTextLength = sentences.reduce((sum, item) => sum + item.text.length, 0);
+    const start = sentences[0]?.start || 0;
+    const end = sentences[sentences.length - 1]?.end || sentences[sentences.length - 1]?.start || 0;
+
+    const lines = [];
+    lines.push(`# ${videoName} - 字幕总结`);
+    lines.push('');
+    lines.push(`生成依据：${DP.subtitles.length} 条字幕，约 ${Math.max(1, Math.round(totalTextLength / 450))} 分钟阅读量，覆盖 ${DP.formatTime(start)} - ${DP.formatTime(end)}。`);
+    lines.push('');
+    lines.push('## 一句话概览');
+    lines.push(highlights[0] ? highlights[0].text : sentences[0].text);
+    lines.push('');
+    lines.push('## 核心重点');
+    highlights.slice(0, 8).forEach((item, idx) => {
+      lines.push(`${idx + 1}. [${DP.formatTime(item.start)}] ${item.text}`);
+    });
+    lines.push('');
+    lines.push('## 分段理解');
+    chapters.forEach((chapter, idx) => {
+      lines.push(`${idx + 1}. ${DP.formatTime(chapter.start)} - ${DP.formatTime(chapter.end)}：${chapter.text}`);
+    });
+    lines.push('');
+    lines.push('## 高频关键词');
+    lines.push(formatKeywordLine(keywords));
+    lines.push('');
+    lines.push('## 复习建议');
+    lines.push('- 先通读“核心重点”，建立整节课的主线。');
+    lines.push('- 再按“分段理解”的时间点回看不熟悉片段。');
+    lines.push('- 用“高频关键词”反查字幕，定位反复出现的概念、方法或问题。');
+    return lines.join('\n');
+  }
+
+  DP.generateVideoSummary = function generateVideoSummary() {
+    if (!DP.subtitles || DP.subtitles.length === 0) {
+      DP.showToast('⚠ 请先上传或生成字幕');
+      return;
+    }
+
+    const summary = buildSummaryText();
+    if (!summary) {
+      DP.showToast('⚠ 当前字幕内容太少，无法生成总结');
+      return;
+    }
+
+    DP.currentSummaryText = summary;
+    DP.summaryContent.textContent = summary;
+    DP.summaryMeta.textContent = `${DP.currentVideoName || '当前视频'} · ${DP.subtitles.length} 条字幕 · 本地生成`;
+    DP.summaryModal.classList.add('visible');
+    DP.summaryModal.setAttribute('aria-hidden', 'false');
+    DP.showToast('✅ 已生成视频总结');
+  };
+
+  DP.closeSummary = function closeSummary() {
+    DP.summaryModal.classList.remove('visible');
+    DP.summaryModal.setAttribute('aria-hidden', 'true');
+  };
+
+  DP.copySummary = async function copySummary() {
+    if (!DP.currentSummaryText) return;
+    try {
+      await navigator.clipboard.writeText(DP.currentSummaryText);
+      DP.showToast('📋 总结已复制');
+    } catch (e) {
+      DP.showToast('⚠ 复制失败，可手动选中复制');
+    }
+  };
+
+  DP.exportSummary = function exportSummary() {
+    if (!DP.currentSummaryText) return;
+    const blob = new Blob([DP.currentSummaryText], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (DP.currentVideoName || 'video').replace(/\.[^.]+$/, '') + '.summary.txt';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      URL.revokeObjectURL(a.href);
+      a.remove();
+    }, 0);
+    DP.showToast('📥 已导出总结');
+  };
+
+  if (DP.btnSummary) DP.btnSummary.addEventListener('click', DP.generateVideoSummary);
+  if (DP.btnSummaryClose) DP.btnSummaryClose.addEventListener('click', DP.closeSummary);
+  if (DP.btnSummaryCopy) DP.btnSummaryCopy.addEventListener('click', DP.copySummary);
+  if (DP.btnSummaryExport) DP.btnSummaryExport.addEventListener('click', DP.exportSummary);
+  if (DP.summaryModal) {
+    DP.summaryModal.addEventListener('click', (event) => {
+      if (event.target === DP.summaryModal) DP.closeSummary();
+    });
+  }
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && DP.summaryModal?.classList.contains('visible')) DP.closeSummary();
+  });
+})();
