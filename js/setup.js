@@ -114,6 +114,7 @@ DP.audioCtx           = null;
 DP.gainNode           = null;
 DP.customVolume       = 100;  // 0-300%
 DP.currentSummaryText = '';
+DP.summaryConfigCache = null;
 
 // ==================== 多标签页隔离 ====================
 // window.name 特性：刷新保留、不被跨标签页共享、复制标签页时为空白

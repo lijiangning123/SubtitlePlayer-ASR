@@ -248,10 +248,24 @@ window.DP = window.DP || {};
   DP.applySummaryProviderDefaults = function applySummaryProviderDefaults(force) {
     const provider = DP.summaryProvider?.value || 'openai';
     const defaults = PROVIDER_DEFAULTS[provider] || PROVIDER_DEFAULTS.custom;
-    if (force || !DP.summaryModel.value.trim()) DP.summaryModel.value = defaults.model;
-    if (force || !DP.summaryBaseUrl.value.trim()) DP.summaryBaseUrl.value = defaults.baseUrl;
+    const saved = DP.summaryConfigCache?.providers?.[provider] || {};
+    DP.summaryModel.value = saved.model || (force ? defaults.model : DP.summaryModel.value.trim() || defaults.model);
+    DP.summaryBaseUrl.value = saved.baseUrl || (force ? defaults.baseUrl : DP.summaryBaseUrl.value.trim() || defaults.baseUrl);
+    DP.summaryApiKey.value = '';
     DP.summaryConfigHelp.textContent = defaults.help;
+    const active = DP.summaryConfigCache?.provider || 'openai';
+    const stateText = saved.apiKeySet ? '已保存 API Key。留空可保留原 Key。' : '尚未保存 API Key。';
+    DP.summaryConfigStatus.textContent = (provider === active ? '当前使用：' : '已保存：') + providerLabel(provider) + '；' + stateText;
   };
+
+  function providerLabel(provider) {
+    return {
+      openai: 'ChatGPT / OpenAI',
+      qwen: '通义千问',
+      doubao: '豆包 / 火山方舟',
+      custom: '其他 / 自定义'
+    }[provider] || provider;
+  }
 
   DP.openSummaryConfig = async function openSummaryConfig() {
     if (!DP.summaryConfigModal) return;
@@ -263,14 +277,13 @@ window.DP = window.DP || {};
       const resp = await DP.fetchWithTimeout(SUMMARY_CONFIG_ENDPOINT, { method: 'GET' }, 5000);
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const data = await resp.json();
+      DP.summaryConfigCache = data;
       DP.summaryProvider.value = data.provider || 'openai';
-      DP.summaryModel.value = data.model || '';
-      DP.summaryBaseUrl.value = data.baseUrl || '';
-      DP.applySummaryProviderDefaults(false);
-      DP.summaryConfigStatus.textContent = data.apiKeySet ? '已保存 API Key。留空可保留原 Key。' : '尚未保存 API Key。';
+      DP.applySummaryProviderDefaults(true);
     } catch (err) {
-      DP.summaryConfigStatus.textContent = '无法连接本地服务，请先通过“字幕播放器.cmd”启动。';
+      DP.summaryConfigCache = null;
       DP.applySummaryProviderDefaults(false);
+      DP.summaryConfigStatus.textContent = '无法连接本地服务，请先通过“字幕播放器.cmd”启动。';
     }
   };
 
@@ -296,18 +309,17 @@ window.DP = window.DP || {};
       }, 10000);
       const data = await resp.json().catch(() => ({}));
       if (!resp.ok) throw new Error(data.detail || ('HTTP ' + resp.status));
+      DP.summaryConfigCache = data;
       DP.summaryProvider.value = data.provider || payload.provider;
-      DP.summaryModel.value = data.model || payload.model;
-      DP.summaryBaseUrl.value = data.baseUrl || payload.baseUrl;
-      DP.summaryApiKey.value = '';
-      DP.summaryConfigStatus.textContent = '配置已保存。现在可以关闭窗口并点击“总结”。';
+      DP.applySummaryProviderDefaults(true);
+      DP.summaryConfigStatus.textContent = `${providerLabel(DP.summaryProvider.value)} 已保存并设为当前使用。现在可以关闭窗口并点击“总结”。`;
       DP.showToast('✅ 模型配置已保存');
     } catch (err) {
       DP.summaryConfigStatus.textContent = '保存失败：' + err.message;
       DP.showToast('⚠ 保存模型配置失败');
     } finally {
       DP.btnSummaryConfigSave.disabled = false;
-      DP.btnSummaryConfigSave.textContent = '💾 保存配置';
+      DP.btnSummaryConfigSave.textContent = '💾 保存并使用';
     }
   };
 

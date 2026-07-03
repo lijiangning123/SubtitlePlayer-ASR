@@ -80,11 +80,11 @@
 
 1. 运行 `字幕播放器.cmd`
 2. 点击文稿面板标题栏「⚙ 模型」
-3. 选择 ChatGPT / 豆包 / 千问
+3. 在下拉框选择 ChatGPT / 千问 / 豆包 / 其他
 4. 填入 API Key、模型名和 Base URL
-5. 点击「💾 保存配置」
+5. 点击「💾 保存并使用」
 
-保存后会生成 `asr-service/summary-config.json`。该文件已加入 `.gitignore`，不要提交到 GitHub。也可以手动复制 `asr-service/summary-config.example.json` 为 `summary-config.json` 后编辑。
+四个供应商可以分别保存配置；最后点击「保存并使用」的供应商会作为当前总结模型。保存后会生成 `asr-service/summary-config.json`。该文件已加入 `.gitignore`，不要提交到 GitHub。也可以手动复制 `asr-service/summary-config.example.json` 为 `summary-config.json` 后编辑。
 
 ### 编辑字幕
 

@@ -182,29 +182,36 @@ def load_summary_config() -> dict:
 
 
 def public_summary_config() -> dict:
+    raw = _read_json_file(APP_DIR / "summary-config.json")
+    active = (raw.get("provider") or "openai").strip().lower()
     config = load_summary_config()
+    defaults = summary_provider_defaults()
+    providers: dict[str, dict] = {}
+    for provider, default in defaults.items():
+        section = raw.get(provider, {}) if isinstance(raw.get(provider), dict) else {}
+        base_url = section.get("baseUrl") or section.get("base_url") or default["baseUrl"]
+        api_type = section.get("apiType") or section.get("api_type") or default["apiType"]
+        if provider == "openai" and str(base_url).rstrip("/") != "https://api.openai.com/v1":
+            api_type = "chat_completions"
+        providers[provider] = {
+            "baseUrl": base_url,
+            "model": section.get("model") or default["model"],
+            "apiType": api_type,
+            "apiKeySet": bool(section.get("apiKey") or section.get("api_key")),
+        }
+
     return {
-        "provider": config.get("provider") or "openai",
+        "provider": active,
         "baseUrl": config.get("base_url") or "",
         "model": config.get("model") or "",
         "apiType": config.get("api_type") or "",
         "apiKeySet": bool(config.get("api_key")),
+        "providers": providers,
     }
 
 
-def save_summary_config(data: dict) -> dict:
-    provider = str(data.get("provider") or "openai").strip().lower()
-    api_key = str(data.get("apiKey") or "").strip()
-    model = str(data.get("model") or "").strip()
-    base_url = str(data.get("baseUrl") or "").strip()
-    api_type = str(data.get("apiType") or "").strip()
-
-    current = _read_json_file(APP_DIR / "summary-config.json")
-    existing = load_summary_config()
-    if not api_key and existing.get("provider") == provider:
-        api_key = existing.get("api_key", "")
-
-    defaults = {
+def summary_provider_defaults() -> dict[str, dict[str, str]]:
+    return {
         "openai": {
             "model": "gpt-5.2",
             "baseUrl": "https://api.openai.com/v1",
@@ -226,6 +233,21 @@ def save_summary_config(data: dict) -> dict:
             "apiType": "chat_completions",
         },
     }
+
+
+def save_summary_config(data: dict) -> dict:
+    provider = str(data.get("provider") or "openai").strip().lower()
+    api_key = str(data.get("apiKey") or "").strip()
+    model = str(data.get("model") or "").strip()
+    base_url = str(data.get("baseUrl") or "").strip()
+    api_type = str(data.get("apiType") or "").strip()
+
+    current = _read_json_file(APP_DIR / "summary-config.json")
+    existing = load_summary_config()
+    if not api_key and existing.get("provider") == provider:
+        api_key = existing.get("api_key", "")
+
+    defaults = summary_provider_defaults()
     default = defaults.get(provider, defaults["custom"])
     model = model or default["model"]
     base_url = base_url or default["baseUrl"]
@@ -240,7 +262,7 @@ def save_summary_config(data: dict) -> dict:
     if not base_url:
         raise RuntimeError("请填写 Base URL")
 
-    next_config = {key: value for key, value in current.items() if key.startswith("_")}
+    next_config = {key: value for key, value in current.items() if key.startswith("_") or key in defaults}
     next_config["provider"] = provider
     next_config[provider] = {
         "apiKey": api_key,

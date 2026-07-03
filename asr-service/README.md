@@ -47,7 +47,10 @@ Recommended configuration:
 2. Click `⚙ 模型` in the transcript panel.
 3. Select OpenAI, Qwen, Doubao, or custom provider.
 4. Fill API Key, model, and Base URL.
-5. Click save.
+5. Click save and use.
+
+Each provider keeps its own saved configuration. The provider selected when
+saving becomes the active summary provider.
 
 `summary-config.json` is ignored by Git. Do not commit API keys.
 
