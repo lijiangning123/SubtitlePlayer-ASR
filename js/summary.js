@@ -9,7 +9,7 @@ window.DP = window.DP || {};
     openai: {
       model: 'gpt-5.2',
       baseUrl: 'https://api.openai.com/v1',
-      help: 'ChatGPT / OpenAI：官方地址用 https://api.openai.com/v1。中转站也可填在 Base URL，程序会自动改用 Chat Completions。'
+      help: 'ChatGPT / OpenAI：官方地址用 https://api.openai.com/v1。中转站可填根地址或 /v1 地址，程序会自动尝试 /v1/chat/completions。'
     },
     qwen: {
       model: 'qwen-plus',
@@ -24,7 +24,7 @@ window.DP = window.DP || {};
     custom: {
       model: '',
       baseUrl: '',
-      help: '自定义：适合中转站。填写兼容 OpenAI Chat Completions 的 Base URL、API Key 和模型名。'
+      help: '自定义：适合中转站。Base URL 可填根地址或 /v1 地址；模型名必须按中转站模型列表填写。'
     }
   };
   const STOPWORDS = new Set([

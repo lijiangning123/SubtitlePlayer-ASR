@@ -335,7 +335,17 @@ def call_chat_completions_api(config: dict, prompt: str, max_output_tokens: int)
         ],
         "max_tokens": max_output_tokens,
     }
-    body = _post_json(base_url + "/chat/completions", config["api_key"], payload, timeout=120)
+    urls = chat_completion_urls(base_url)
+    errors: list[str] = []
+    body: dict | None = None
+    for url in urls:
+        try:
+            body = _post_json(url, config["api_key"], payload, timeout=120)
+            break
+        except RuntimeError as exc:
+            errors.append(f"{url}: {exc}")
+    if body is None:
+        raise RuntimeError("模型 API 请求失败。已尝试：\n" + "\n".join(errors[-3:]))
     choices = body.get("choices") or []
     if choices:
         message = choices[0].get("message") or {}
@@ -343,6 +353,30 @@ def call_chat_completions_api(config: dict, prompt: str, max_output_tokens: int)
         if isinstance(content, str) and content.strip():
             return content.strip()
     raise RuntimeError("模型接口未返回可用总结文本")
+
+
+def chat_completion_urls(base_url: str) -> list[str]:
+    base = base_url.rstrip("/")
+    if base.endswith("/chat/completions"):
+        return [base]
+
+    urls: list[str] = []
+    # Most OpenAI-compatible relay endpoints expose /v1/chat/completions.
+    should_try_v1 = (
+        not base.endswith("/v1")
+        and "/v1/" not in base
+        and "/api/v3" not in base
+        and "/compatible-mode/" not in base
+    )
+    if should_try_v1:
+        urls.append(base + "/v1/chat/completions")
+    urls.append(base + "/chat/completions")
+
+    deduped: list[str] = []
+    for url in urls:
+        if url not in deduped:
+            deduped.append(url)
+    return deduped
 
 
 def _post_json(url: str, api_key: str, payload: dict, timeout: int) -> dict:
@@ -357,8 +391,16 @@ def _post_json(url: str, api_key: str, payload: dict, timeout: int) -> dict:
         method="POST",
     )
     try:
-        with urllib.request.urlopen(request, timeout=120) as response:
-            return json.loads(response.read().decode("utf-8"))
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            text = response.read().decode("utf-8", errors="replace")
+            try:
+                return json.loads(text)
+            except json.JSONDecodeError as exc:
+                preview = text[:300].strip() or "<empty response>"
+                raise RuntimeError(
+                    "模型服务返回的不是 JSON。请检查 Base URL 是否需要 /v1，或中转站是否支持 OpenAI-compatible 接口。"
+                    f" 响应预览：{preview}"
+                ) from exc
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
         raise RuntimeError(f"模型 API 请求失败：HTTP {exc.code} {detail[:500]}") from exc
