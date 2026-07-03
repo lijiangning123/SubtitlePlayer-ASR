@@ -72,11 +72,18 @@
 | 功能 | 操作 |
 |------|------|
 | 生成总结 | 先上传或生成字幕，再点击文稿面板标题栏「🧠 总结」 |
-| 重点提炼 | 自动生成一句话概览、核心重点、分段理解、高频关键词和复习建议 |
+| 重点提炼 | 调用 ChatGPT / 豆包 / 千问生成整体结论、知识框架、重点详解、时间线速览和复习问题 |
 | 复制总结 | 总结弹窗中点击「📋 复制」 |
 | 导出 TXT | 总结弹窗中点击「📥 导出」 |
 
-> 当前总结在浏览器本地基于字幕文本生成，不依赖外部 API。适合快速复习；如果需要更强的自然语言总结，可以后续接入本地或云端大模型。
+总结通过本地 `asr-service` 调用模型 API，API Key 不会写入浏览器页面。配置方法：
+
+1. 复制 `asr-service/summary-config.example.json` 为 `asr-service/summary-config.json`
+2. 在 `summary-config.json` 中选择 `provider`：`openai`、`doubao`、`qwen` 或 `custom`
+3. 填入对应供应商的 `apiKey` 和 `model`
+4. 重新运行 `字幕播放器.cmd`
+
+`summary-config.json` 已加入 `.gitignore`，不要提交到 GitHub。
 
 ### 编辑字幕
 

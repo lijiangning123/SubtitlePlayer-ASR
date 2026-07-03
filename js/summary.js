@@ -3,6 +3,7 @@ window.DP = window.DP || {};
 // ==================== 字幕总结 ====================
 
 (function() {
+  const SUMMARY_ENDPOINT = 'http://127.0.0.1:28768/api/summarize';
   const STOPWORDS = new Set([
     '这个','那个','然后','就是','我们','你们','他们','它们','因为','所以','如果','但是','还是','可以','可能','没有','不是','已经',
     '进行','通过','一个','一些','一种','这里','那里','这些','那些','什么','怎么','时候','现在','其实','大家','比较','需要','以及',
@@ -182,24 +183,81 @@ window.DP = window.DP || {};
     return lines.join('\n');
   }
 
-  DP.generateVideoSummary = function generateVideoSummary() {
+  function buildSubtitlePayload() {
+    return (DP.subtitles || []).map(item => ({
+      start: item.start,
+      end: item.end,
+      text: cleanText(item.text)
+    })).filter(item => item.text);
+  }
+
+  async function summarizeWithService() {
+    const subtitles = buildSubtitlePayload();
+    const resp = await DP.fetchWithTimeout(SUMMARY_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        videoName: DP.currentVideoName || '',
+        subtitles
+      })
+    }, 180000);
+
+    let data = {};
+    try {
+      data = await resp.json();
+    } catch (e) {}
+
+    if (!resp.ok) {
+      throw new Error(data.detail || ('总结服务请求失败：HTTP ' + resp.status));
+    }
+    if (!data.summary) {
+      throw new Error('总结服务没有返回内容');
+    }
+    return data;
+  }
+
+  DP.setSummaryBusy = function setSummaryBusy(isBusy) {
+    if (!DP.btnSummary) return;
+    DP.btnSummary.disabled = isBusy;
+    DP.btnSummary.textContent = isBusy ? '🧠 总结中...' : '🧠 总结';
+  };
+
+  DP.generateVideoSummary = async function generateVideoSummary() {
     if (!DP.subtitles || DP.subtitles.length === 0) {
       DP.showToast('⚠ 请先上传或生成字幕');
       return;
     }
 
-    const summary = buildSummaryText();
-    if (!summary) {
-      DP.showToast('⚠ 当前字幕内容太少，无法生成总结');
-      return;
+    DP.setSummaryBusy(true);
+    DP.showToast('🧠 正在调用模型总结字幕，长视频需要等待一会儿');
+    try {
+      const data = await summarizeWithService();
+      DP.currentSummaryText = data.summary;
+      DP.summaryContent.textContent = data.summary;
+      DP.summaryMeta.textContent = `${DP.currentVideoName || '当前视频'} · ${DP.subtitles.length} 条字幕 · ${data.provider || '模型'} · ${data.model || ''}`;
+      DP.summaryModal.classList.add('visible');
+      DP.summaryModal.setAttribute('aria-hidden', 'false');
+      DP.showToast('✅ 已生成 ChatGPT/模型总结');
+    } catch (err) {
+      const message = err.name === 'AbortError' ? '模型总结超时，请稍后重试或换短一点的字幕' : err.message;
+      DP.showToast('⚠ 总结失败：' + message);
+      DP.currentSummaryText = [
+        '模型总结失败',
+        '',
+        message,
+        '',
+        '请确认：',
+        '1. 已通过“字幕播放器.cmd”启动本地服务。',
+        '2. 已在 asr-service/summary-config.json 中配置 ChatGPT / 豆包 / 千问的 API Key 和模型。',
+        '3. 当前网络可以访问所选模型服务。'
+      ].join('\n');
+      DP.summaryContent.textContent = DP.currentSummaryText;
+      DP.summaryMeta.textContent = `${DP.currentVideoName || '当前视频'} · 配置检查`;
+      DP.summaryModal.classList.add('visible');
+      DP.summaryModal.setAttribute('aria-hidden', 'false');
+    } finally {
+      DP.setSummaryBusy(false);
     }
-
-    DP.currentSummaryText = summary;
-    DP.summaryContent.textContent = summary;
-    DP.summaryMeta.textContent = `${DP.currentVideoName || '当前视频'} · ${DP.subtitles.length} 条字幕 · 本地生成`;
-    DP.summaryModal.classList.add('visible');
-    DP.summaryModal.setAttribute('aria-hidden', 'false');
-    DP.showToast('✅ 已生成视频总结');
   };
 
   DP.closeSummary = function closeSummary() {

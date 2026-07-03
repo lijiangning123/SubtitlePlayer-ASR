@@ -15,3 +15,9 @@ MEMORY.md
 # Temp
 *.crswap
 *.tmp
+__pycache__/
+
+# Local secrets
+asr-service/openai-key.txt
+asr-service/summary-config.json
+asr-service/*.key

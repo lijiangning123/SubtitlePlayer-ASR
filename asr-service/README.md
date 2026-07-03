@@ -28,6 +28,43 @@ The frontend sends `engine=bijian` by default. The standard-library service maps
 that to AsrTools' Bcut/B interface. Other accepted values include `jianying` and
 `kuaishou` when the corresponding AsrTools modules are available.
 
+## Model Summary
+
+The player can summarize loaded subtitles through this local service. The browser
+posts subtitles to `/api/summarize`; this service calls the configured model
+provider and returns the summary.
+
+Supported built-in providers:
+
+- `openai`: ChatGPT/OpenAI Responses API.
+- `qwen`: Alibaba DashScope OpenAI-compatible API.
+- `doubao`: Volcengine Ark OpenAI-compatible API.
+- `custom`: Any OpenAI-compatible chat completions endpoint.
+
+Recommended configuration:
+
+1. Copy `summary-config.example.json` to `summary-config.json`.
+2. Set `provider`, `apiKey`, and `model`.
+3. Restart `字幕播放器.cmd`.
+
+`summary-config.json` is ignored by Git. Do not commit API keys.
+
+Environment variable alternatives:
+
+```powershell
+$env:SUMMARY_PROVIDER="openai"
+$env:OPENAI_API_KEY="..."
+$env:OPENAI_SUMMARY_MODEL="gpt-5.2"
+
+$env:SUMMARY_PROVIDER="qwen"
+$env:QWEN_API_KEY="..."
+$env:QWEN_SUMMARY_MODEL="qwen-plus"
+
+$env:SUMMARY_PROVIDER="doubao"
+$env:DOUBAO_API_KEY="..."
+$env:DOUBAO_SUMMARY_MODEL="your-doubao-or-ark-model-id"
+```
+
 ## OpenAI Fallback
 
 To use OpenAI Whisper API directly, submit `provider=openai` or `engine=whisper-api` and set:

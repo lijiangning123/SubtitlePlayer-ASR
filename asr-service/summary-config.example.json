@@ -1,0 +1,32 @@
+{
+  "provider": "openai",
+  "openai": {
+    "apiKey": "sk-your-openai-key",
+    "model": "gpt-5.2"
+  },
+  "_examples": {
+    "qwen": {
+      "provider": "qwen",
+      "qwen": {
+        "apiKey": "sk-your-dashscope-key",
+        "model": "qwen-plus",
+        "baseUrl": "https://dashscope.aliyuncs.com/compatible-mode/v1"
+      }
+    },
+    "doubao": {
+      "provider": "doubao",
+      "doubao": {
+        "apiKey": "your-volcengine-ark-key",
+        "model": "your-doubao-or-ark-model-id",
+        "baseUrl": "https://ark.cn-beijing.volces.com/api/v3"
+      }
+    },
+    "custom_openai_compatible": {
+      "provider": "custom",
+      "apiKey": "your-api-key",
+      "model": "your-model",
+      "baseUrl": "https://your-openai-compatible-endpoint/v1",
+      "apiType": "chat_completions"
+    }
+  }
+}
