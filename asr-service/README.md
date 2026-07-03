@@ -19,7 +19,7 @@ player.
 Check service health:
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:28768/api/health
+Invoke-RestMethod http://127.0.0.1:28778/api/health
 ```
 
 ## Engines

@@ -21,7 +21,7 @@ if not exist "%PYTHON_EXE%" (
   exit /b 1
 )
 
-start "SubtitlePlayer ASR Service" cmd /k ""%PYTHON_EXE%" "%ASR_DIR%\stdlib_asr_server.py" --host 127.0.0.1 --port 28768"
+start "SubtitlePlayer ASR Service" cmd /k ""%PYTHON_EXE%" "%ASR_DIR%\stdlib_asr_server.py" --host 127.0.0.1 --port 28778"
 
 timeout /t 2 /nobreak >nul
 start "" "%PLAYER%"
