@@ -10,12 +10,14 @@ import sys
 import tempfile
 import urllib.error
 import urllib.request
+import socket
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
 
 APP_DIR = Path(__file__).resolve().parent
+SUMMARY_API_TIMEOUT = int(os.getenv("SUMMARY_API_TIMEOUT", "300"))
 
 
 def _candidate_paths() -> dict[str, list[Path]]:
@@ -243,15 +245,18 @@ def save_summary_config(data: dict) -> dict:
     api_type = str(data.get("apiType") or "").strip()
 
     current = _read_json_file(APP_DIR / "summary-config.json")
+    previous_section = current.get(provider) if isinstance(current.get(provider), dict) else {}
     existing = load_summary_config()
     if not api_key and existing.get("provider") == provider:
         api_key = existing.get("api_key", "")
+    if not api_key:
+        api_key = str(previous_section.get("apiKey") or previous_section.get("api_key") or "").strip()
 
     defaults = summary_provider_defaults()
     default = defaults.get(provider, defaults["custom"])
-    model = model or default["model"]
-    base_url = base_url or default["baseUrl"]
-    api_type = api_type or default["apiType"]
+    model = model or str(previous_section.get("model") or "").strip() or default["model"]
+    base_url = base_url or str(previous_section.get("baseUrl") or previous_section.get("base_url") or "").strip() or default["baseUrl"]
+    api_type = api_type or str(previous_section.get("apiType") or previous_section.get("api_type") or "").strip() or default["apiType"]
     if provider == "openai" and base_url.rstrip("/") != "https://api.openai.com/v1":
         api_type = "chat_completions"
 
@@ -331,7 +336,7 @@ def call_responses_api(config: dict, prompt: str, max_output_tokens: int) -> str
         ],
         "max_output_tokens": max_output_tokens,
     }
-    body = _post_json(base_url.rstrip("/") + "/responses", config["api_key"], payload, timeout=120)
+    body = _post_json(base_url.rstrip("/") + "/responses", config["api_key"], payload, timeout=SUMMARY_API_TIMEOUT)
     text = extract_openai_text(body)
     if not text:
         raise RuntimeError("模型接口未返回可用总结文本")
@@ -362,7 +367,7 @@ def call_chat_completions_api(config: dict, prompt: str, max_output_tokens: int)
     body: dict | None = None
     for url in urls:
         try:
-            body = _post_json(url, config["api_key"], payload, timeout=120)
+            body = _post_json(url, config["api_key"], payload, timeout=SUMMARY_API_TIMEOUT)
             break
         except RuntimeError as exc:
             errors.append(f"{url}: {exc}")
@@ -428,6 +433,11 @@ def _post_json(url: str, api_key: str, payload: dict, timeout: int) -> dict:
         raise RuntimeError(f"模型 API 请求失败：HTTP {exc.code} {detail[:500]}") from exc
     except urllib.error.URLError as exc:
         raise RuntimeError(f"无法连接模型 API：{exc.reason}") from exc
+    except (TimeoutError, socket.timeout) as exc:
+        raise RuntimeError(
+            f"模型响应超时（已等待 {timeout} 秒）。豆包免费模型在长字幕总结时可能较慢，请稍后重试，"
+            "或换用更快的模型/减少字幕长度。"
+        ) from exc
 
 
 def format_transcript(subtitles: list[dict]) -> str:
@@ -468,7 +478,7 @@ def summarize_with_openai(video_name: str, subtitles: list[dict]) -> str:
     if not transcript:
         raise RuntimeError("没有可总结的字幕文本")
 
-    max_chars = int(os.getenv("OPENAI_SUMMARY_CHUNK_CHARS", "28000"))
+    max_chars = int(os.getenv("OPENAI_SUMMARY_CHUNK_CHARS", "12000"))
     if len(transcript) <= max_chars:
         return call_summary_model(build_summary_prompt(video_name, transcript, len(subtitles)))
 
@@ -545,6 +555,7 @@ class Handler(BaseHTTPRequestHandler):
                 "summary_provider": summary_config.get("provider"),
                 "summary_model": summary_config.get("model"),
                 "summary_configured": bool(summary_config.get("api_key") and summary_config.get("model")),
+                "summary_api_timeout": SUMMARY_API_TIMEOUT,
             },
         )
 

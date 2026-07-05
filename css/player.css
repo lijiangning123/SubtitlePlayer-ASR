@@ -643,6 +643,24 @@
       align-items: center;
       gap: 6px;
     }
+    .summary-model-status {
+      max-width: 220px;
+      padding: 4px 8px;
+      border: 1px solid var(--mid);
+      border-radius: 6px;
+      color: var(--text-dim);
+      background: var(--search-bg);
+      font-size: 0.7rem;
+      font-weight: 400;
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .summary-model-status.empty {
+      color: var(--dark);
+      border-style: dashed;
+    }
 
     /* 搜索框 */
     .search-box {

@@ -3,8 +3,8 @@ window.DP = window.DP || {};
 // ==================== 字幕总结 ====================
 
 (function() {
-  const SUMMARY_ENDPOINT = 'http://127.0.0.1:28788/api/summarize';
-  const SUMMARY_CONFIG_ENDPOINT = 'http://127.0.0.1:28788/api/summary-config';
+  const SUMMARY_ENDPOINT = 'http://127.0.0.1:28888/api/summarize';
+  const SUMMARY_CONFIG_ENDPOINT = 'http://127.0.0.1:28888/api/summary-config';
   const PROVIDER_DEFAULTS = {
     openai: {
       model: 'gpt-5.2',
@@ -223,7 +223,7 @@ window.DP = window.DP || {};
         videoName: DP.currentVideoName || '',
         subtitles
       })
-    }, 180000);
+    }, 360000);
 
     let data = {};
     try {
@@ -245,17 +245,29 @@ window.DP = window.DP || {};
     DP.btnSummary.textContent = isBusy ? '🧠 总结中...' : '🧠 总结';
   };
 
+  function rememberSummaryProviderDraft(provider) {
+    if (!provider || !DP.summaryModel || !DP.summaryBaseUrl || !DP.summaryApiKey) return;
+    DP.summaryProviderDrafts = DP.summaryProviderDrafts || {};
+    DP.summaryProviderDrafts[provider] = {
+      model: DP.summaryModel.value.trim(),
+      baseUrl: DP.summaryBaseUrl.value.trim(),
+      apiKey: DP.summaryApiKey.value.trim()
+    };
+  }
+
   DP.applySummaryProviderDefaults = function applySummaryProviderDefaults(force) {
     const provider = DP.summaryProvider?.value || 'openai';
     const defaults = PROVIDER_DEFAULTS[provider] || PROVIDER_DEFAULTS.custom;
     const saved = DP.summaryConfigCache?.providers?.[provider] || {};
-    DP.summaryModel.value = saved.model || (force ? defaults.model : DP.summaryModel.value.trim() || defaults.model);
-    DP.summaryBaseUrl.value = saved.baseUrl || (force ? defaults.baseUrl : DP.summaryBaseUrl.value.trim() || defaults.baseUrl);
-    DP.summaryApiKey.value = '';
+    const draft = DP.summaryProviderDrafts?.[provider] || {};
+    DP.summaryModel.value = draft.model || saved.model || (force ? defaults.model : DP.summaryModel.value.trim() || defaults.model);
+    DP.summaryBaseUrl.value = draft.baseUrl || saved.baseUrl || (force ? defaults.baseUrl : DP.summaryBaseUrl.value.trim() || defaults.baseUrl);
+    DP.summaryApiKey.value = draft.apiKey || '';
     DP.summaryConfigHelp.textContent = defaults.help;
     const active = DP.summaryConfigCache?.provider || 'openai';
     const stateText = saved.apiKeySet ? '已保存 API Key。留空可保留原 Key。' : '尚未保存 API Key。';
     DP.summaryConfigStatus.textContent = (provider === active ? '当前使用：' : '已保存：') + providerLabel(provider) + '；' + stateText;
+    DP.summaryLastProvider = provider;
   };
 
   function providerLabel(provider) {
@@ -266,6 +278,47 @@ window.DP = window.DP || {};
       custom: '其他 / 自定义'
     }[provider] || provider;
   }
+
+  function activeSummaryConfig(data) {
+    if (!data) return null;
+    const provider = data.provider || 'openai';
+    const saved = data.providers?.[provider] || {};
+    return {
+      provider,
+      model: saved.model || data.model || '',
+      apiKeySet: Boolean(saved.apiKeySet || data.apiKeySet)
+    };
+  }
+
+  function updateSummaryModelStatus(data) {
+    if (!DP.summaryCurrentModel) return;
+    const active = activeSummaryConfig(data);
+    if (!active || !active.model) {
+      DP.summaryCurrentModel.textContent = '当前模型：未配置';
+      DP.summaryCurrentModel.title = '打开“模型”配置用于视频总结的大模型';
+      DP.summaryCurrentModel.classList.add('empty');
+      return;
+    }
+    const label = `${providerLabel(active.provider)} / ${active.model}`;
+    DP.summaryCurrentModel.textContent = `当前模型：${label}`;
+    DP.summaryCurrentModel.title = active.apiKeySet ? label : `${label}（未保存 API Key）`;
+    DP.summaryCurrentModel.classList.toggle('empty', !active.apiKeySet);
+  }
+
+  DP.refreshSummaryModelStatus = async function refreshSummaryModelStatus() {
+    if (!DP.summaryCurrentModel) return;
+    try {
+      const resp = await DP.fetchWithTimeout(SUMMARY_CONFIG_ENDPOINT, { method: 'GET' }, 5000);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const data = await resp.json();
+      DP.summaryConfigCache = data;
+      updateSummaryModelStatus(data);
+    } catch (err) {
+      DP.summaryCurrentModel.textContent = '当前模型：服务未启动';
+      DP.summaryCurrentModel.title = '请通过“字幕播放器.cmd”启动本地服务';
+      DP.summaryCurrentModel.classList.add('empty');
+    }
+  };
 
   DP.openSummaryConfig = async function openSummaryConfig() {
     if (!DP.summaryConfigModal) return;
@@ -278,7 +331,9 @@ window.DP = window.DP || {};
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const data = await resp.json();
       DP.summaryConfigCache = data;
+      updateSummaryModelStatus(data);
       DP.summaryProvider.value = data.provider || 'openai';
+      DP.summaryLastProvider = DP.summaryProvider.value;
       DP.applySummaryProviderDefaults(true);
     } catch (err) {
       DP.summaryConfigCache = null;
@@ -310,7 +365,14 @@ window.DP = window.DP || {};
       const data = await resp.json().catch(() => ({}));
       if (!resp.ok) throw new Error(data.detail || ('HTTP ' + resp.status));
       DP.summaryConfigCache = data;
+      updateSummaryModelStatus(data);
       DP.summaryProvider.value = data.provider || payload.provider;
+      DP.summaryProviderDrafts[DP.summaryProvider.value] = {
+        model: DP.summaryModel.value.trim(),
+        baseUrl: DP.summaryBaseUrl.value.trim(),
+        apiKey: ''
+      };
+      DP.summaryLastProvider = DP.summaryProvider.value;
       DP.applySummaryProviderDefaults(true);
       DP.summaryConfigStatus.textContent = `${providerLabel(DP.summaryProvider.value)} 已保存并设为当前使用。现在可以关闭窗口并点击“总结”。`;
       DP.showToast('✅ 模型配置已保存');
@@ -393,12 +455,16 @@ window.DP = window.DP || {};
 
   if (DP.btnSummary) DP.btnSummary.addEventListener('click', DP.generateVideoSummary);
   if (DP.btnSummaryConfig) DP.btnSummaryConfig.addEventListener('click', DP.openSummaryConfig);
-  if (DP.summaryProvider) DP.summaryProvider.addEventListener('change', () => DP.applySummaryProviderDefaults(true));
+  if (DP.summaryProvider) DP.summaryProvider.addEventListener('change', () => {
+    rememberSummaryProviderDraft(DP.summaryLastProvider);
+    DP.applySummaryProviderDefaults(true);
+  });
   if (DP.btnSummaryConfigClose) DP.btnSummaryConfigClose.addEventListener('click', DP.closeSummaryConfig);
   if (DP.btnSummaryConfigSave) DP.btnSummaryConfigSave.addEventListener('click', DP.saveSummaryConfig);
   if (DP.btnSummaryClose) DP.btnSummaryClose.addEventListener('click', DP.closeSummary);
   if (DP.btnSummaryCopy) DP.btnSummaryCopy.addEventListener('click', DP.copySummary);
   if (DP.btnSummaryExport) DP.btnSummaryExport.addEventListener('click', DP.exportSummary);
+  DP.refreshSummaryModelStatus();
   if (DP.summaryModal) {
     DP.summaryModal.addEventListener('click', (event) => {
       if (event.target === DP.summaryModal) DP.closeSummary();

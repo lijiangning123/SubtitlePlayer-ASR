@@ -19,6 +19,7 @@ DP.themeMenu       = document.getElementById('themeMenu');
 DP.btnAutoScroll   = document.getElementById('btnAutoScroll');
 DP.btnSummary      = document.getElementById('btnSummary');
 DP.btnSummaryConfig = document.getElementById('btnSummaryConfig');
+DP.summaryCurrentModel = document.getElementById('summaryCurrentModel');
 DP.summaryModal    = document.getElementById('summaryModal');
 DP.summaryMeta     = document.getElementById('summaryMeta');
 DP.summaryContent  = document.getElementById('summaryContent');
@@ -115,6 +116,8 @@ DP.gainNode           = null;
 DP.customVolume       = 100;  // 0-300%
 DP.currentSummaryText = '';
 DP.summaryConfigCache = null;
+DP.summaryProviderDrafts = {};
+DP.summaryLastProvider = '';
 
 // ==================== 多标签页隔离 ====================
 // window.name 特性：刷新保留、不被跨标签页共享、复制标签页时为空白

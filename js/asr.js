@@ -4,13 +4,13 @@ window.DP = window.DP || {};
 
 DP.ASR_ENDPOINT_KEY = 'dp_asr_endpoint';
 DP.ASR_ENGINE_KEY = 'dp_asr_engine';
-DP.DEFAULT_ASR_ENDPOINT = 'http://127.0.0.1:28788/api/transcribe';
+DP.DEFAULT_ASR_ENDPOINT = 'http://127.0.0.1:28888/api/transcribe';
 DP.DEFAULT_ASR_ENGINE = 'bijian';
 
 DP.getAsrEndpoint = function getAsrEndpoint() {
   try {
     const stored = localStorage.getItem(DP.ASR_ENDPOINT_KEY);
-    if (stored && !stored.includes(':8765/') && !stored.includes(':18765/') && !stored.includes(':28765/') && !stored.includes(':28768/') && !stored.includes(':28778/')) {
+    if (stored && !stored.includes(':8765/') && !stored.includes(':18765/') && !stored.includes(':28765/') && !stored.includes(':28768/') && !stored.includes(':28778/') && !stored.includes(':28788/')) {
       return stored;
     }
     if (stored) {
