@@ -476,11 +476,6 @@ window.DP = window.DP || {};
       if (event.target === DP.summaryModal) DP.closeSummary();
     });
   }
-  if (DP.summaryConfigModal) {
-    DP.summaryConfigModal.addEventListener('click', (event) => {
-      if (event.target === DP.summaryConfigModal) DP.closeSummaryConfig();
-    });
-  }
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && DP.summaryModal?.classList.contains('visible')) DP.closeSummary();
     if (event.key === 'Escape' && DP.summaryConfigModal?.classList.contains('visible')) DP.closeSummaryConfig();
