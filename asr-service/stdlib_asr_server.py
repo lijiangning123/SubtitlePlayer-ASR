@@ -213,6 +213,11 @@ def public_summary_config() -> dict:
             "apiKeyMask": mask_api_key(api_key),
         }
 
+    active_api_key = config.get("api_key") or ""
+    if active in providers and active_api_key:
+        providers[active]["apiKeySet"] = True
+        providers[active]["apiKeyMask"] = mask_api_key(active_api_key)
+
     return {
         "provider": active,
         "baseUrl": config.get("base_url") or "",
