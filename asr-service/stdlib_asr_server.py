@@ -174,6 +174,15 @@ def load_summary_config() -> dict:
             "model": pick("DOUBAO_SUMMARY_MODEL", "ARK_MODEL"),
         }
 
+    if provider in {"deepseek", "deep_seek", "深度求索"}:
+        return {
+            "provider": "deepseek",
+            "api_type": "chat_completions",
+            "base_url": pick("DEEPSEEK_BASE_URL", default="https://api.deepseek.com"),
+            "api_key": pick("DEEPSEEK_API_KEY"),
+            "model": pick("DEEPSEEK_SUMMARY_MODEL", "DEEPSEEK_MODEL", default="deepseek-v4-flash"),
+        }
+
     return {
         "provider": provider or "custom",
         "api_type": pick("SUMMARY_API_TYPE", default="chat_completions"),
@@ -227,6 +236,11 @@ def summary_provider_defaults() -> dict[str, dict[str, str]]:
         "doubao": {
             "model": "",
             "baseUrl": "https://ark.cn-beijing.volces.com/api/v3",
+            "apiType": "chat_completions",
+        },
+        "deepseek": {
+            "model": "deepseek-v4-flash",
+            "baseUrl": "https://api.deepseek.com",
             "apiType": "chat_completions",
         },
         "custom": {
@@ -393,6 +407,7 @@ def chat_completion_urls(base_url: str) -> list[str]:
         not base.endswith("/v1")
         and "/v1/" not in base
         and "/api/v3" not in base
+        and "api.deepseek.com" not in base
         and "/compatible-mode/" not in base
     )
     if should_try_v1:

@@ -21,6 +21,11 @@ window.DP = window.DP || {};
       baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
       help: '豆包：到火山方舟控制台创建 API Key，并填入控制台中的模型或 endpoint id。'
     },
+    deepseek: {
+      model: 'deepseek-v4-flash',
+      baseUrl: 'https://api.deepseek.com',
+      help: 'DeepSeek：到 platform.deepseek.com 创建 API Key。常用模型 deepseek-v4-flash；需要更强能力可改 deepseek-v4-pro。'
+    },
     custom: {
       model: '',
       baseUrl: '',
@@ -275,6 +280,7 @@ window.DP = window.DP || {};
       openai: 'ChatGPT / OpenAI',
       qwen: '通义千问',
       doubao: '豆包 / 火山方舟',
+      deepseek: 'DeepSeek',
       custom: '其他 / 自定义'
     }[provider] || provider;
   }

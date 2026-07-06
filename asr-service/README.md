@@ -39,13 +39,14 @@ Supported built-in providers:
 - `openai`: ChatGPT/OpenAI Responses API.
 - `qwen`: Alibaba DashScope OpenAI-compatible API.
 - `doubao`: Volcengine Ark OpenAI-compatible API.
+- `deepseek`: DeepSeek OpenAI-compatible API.
 - `custom`: Any OpenAI-compatible chat completions endpoint.
 
 Recommended configuration:
 
 1. Run the root `字幕播放器.cmd` launcher.
 2. Click `⚙ 模型` in the transcript panel.
-3. Select OpenAI, Qwen, Doubao, or custom provider.
+3. Select OpenAI, Qwen, Doubao, DeepSeek, or custom provider.
 4. Fill API Key, model, and Base URL.
 5. Click save and use.
 
@@ -68,6 +69,10 @@ $env:QWEN_SUMMARY_MODEL="qwen-plus"
 $env:SUMMARY_PROVIDER="doubao"
 $env:DOUBAO_API_KEY="..."
 $env:DOUBAO_SUMMARY_MODEL="your-doubao-or-ark-model-id"
+
+$env:SUMMARY_PROVIDER="deepseek"
+$env:DEEPSEEK_API_KEY="..."
+$env:DEEPSEEK_SUMMARY_MODEL="deepseek-v4-flash"
 ```
 
 ## OpenAI Fallback
