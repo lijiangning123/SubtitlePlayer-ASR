@@ -202,13 +202,15 @@ def public_summary_config() -> dict:
         section = raw.get(provider, {}) if isinstance(raw.get(provider), dict) else {}
         base_url = section.get("baseUrl") or section.get("base_url") or default["baseUrl"]
         api_type = section.get("apiType") or section.get("api_type") or default["apiType"]
+        api_key = str(section.get("apiKey") or section.get("api_key") or "")
         if provider == "openai" and str(base_url).rstrip("/") != "https://api.openai.com/v1":
             api_type = "chat_completions"
         providers[provider] = {
             "baseUrl": base_url,
             "model": section.get("model") or default["model"],
             "apiType": api_type,
-            "apiKeySet": bool(section.get("apiKey") or section.get("api_key")),
+            "apiKeySet": bool(api_key),
+            "apiKeyMask": mask_api_key(api_key),
         }
 
     return {
@@ -217,8 +219,18 @@ def public_summary_config() -> dict:
         "model": config.get("model") or "",
         "apiType": config.get("api_type") or "",
         "apiKeySet": bool(config.get("api_key")),
+        "apiKeyMask": mask_api_key(config.get("api_key") or ""),
         "providers": providers,
     }
+
+
+def mask_api_key(api_key: str) -> str:
+    key = str(api_key or "").strip()
+    if not key:
+        return ""
+    if len(key) <= 10:
+        return key[:2] + "*" * max(4, len(key) - 2)
+    return key[:6] + "*" * 6 + key[-4:]
 
 
 def summary_provider_defaults() -> dict[str, dict[str, str]]:
