@@ -3,8 +3,8 @@ window.DP = window.DP || {};
 // ==================== 字幕总结 ====================
 
 (function() {
-  const SUMMARY_ENDPOINT = 'http://127.0.0.1:28888/api/summarize';
-  const SUMMARY_CONFIG_ENDPOINT = 'http://127.0.0.1:28888/api/summary-config';
+  const SUMMARY_ENDPOINT = 'http://127.0.0.1:28988/api/summarize';
+  const SUMMARY_CONFIG_ENDPOINT = 'http://127.0.0.1:28988/api/summary-config';
   const PROVIDER_DEFAULTS = {
     openai: {
       model: 'gpt-5.2',
